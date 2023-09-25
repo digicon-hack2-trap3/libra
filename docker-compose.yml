@@ -45,9 +45,9 @@ services:
   swagger:
     image: swaggerapi/swagger-ui
     volumes:
-      - ./docs/openapi.yaml:/openapi.yaml
+      - ./docs/openapi.yml:/openapi.yml
     environment:
-      SWAGGER_JSON: /openapi.yaml
+      SWAGGER_JSON: /openapi.yml
     ports:
       - "4000:8080"
 

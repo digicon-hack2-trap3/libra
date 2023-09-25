@@ -1,0 +1,84 @@
+openapi: 3.0.3
+
+info:
+  title: libra
+  version: 1.0.0
+  description: libra API
+  license:
+    name: MIT
+
+servers:
+  - url: "https://digi-con-team3-libra.trap.jp/"
+    description: production
+  - url: "http://localhost:8080/"
+    description: local
+
+paths:
+  "/login":
+    parameters:
+      - name: username
+        in: query
+        required: true
+        description: username
+        schema:
+          type: string
+      - name: password
+        in: query
+        required: true
+        description: password
+        schema:
+          type: string
+    post:
+      responses:
+        "200":
+          description: ok
+        "400":
+          description: no
+
+  "/note":
+    get:
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Note"
+    post:
+      responses:
+        "200":
+          description: ok
+
+components:
+  parameters:
+    id:
+      name: sessions
+      in: cookie
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    Note:
+      type: object
+      properties:
+        note_id:
+          type: integer
+        user_id:
+          type: integer
+        title:
+          type: string
+        text:
+          type: string
+        updated_at:
+          type: string
+          format: date
+      required:
+        - note_id
+        - user_id
+        - title
+        - text
+        - updated_at
+
