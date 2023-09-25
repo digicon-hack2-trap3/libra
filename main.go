@@ -14,6 +14,8 @@ import (
 
 var db *sqlx.DB
 
+var db *sqlx.DB
+
 func main() {
         InitDB()
 
