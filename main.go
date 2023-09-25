@@ -14,11 +14,6 @@ import (
 
 var db *sqlx.DB
 
-<<<<<<< HEAD
-=======
-var db *sqlx.DB
-
->>>>>>> 4cb1c82474ea809ce4fb6dce8df31e8a76600a0f
 func main() {
         InitDB()
 
