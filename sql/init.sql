@@ -1,0 +1,17 @@
+CREATE TABLE IF NOT EXISTS user
+(
+    userid    SMALLINT UNSIGNED AUTO_INCREMENT,
+    username  TINYTEXT NOT NULL,
+    password  TINYTEXT NOT NULL,
+    PRIMARY KEY (`userid`)
+);
+CREATE TABLE IF NOT EXISTS note
+(
+    noteid    SMALLINT UNSIGNED AUTO_INCREMENT,
+    userid    SMALLINT UNSIGNED NOT NULL,
+    title     TEXT NOT NULL,
+    text      TEXT NOT NULL,
+    color     VARCHAR(6) NOT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`noteid`)
+);
