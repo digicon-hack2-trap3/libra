@@ -7,12 +7,14 @@ services:
       MYSQL_HOST: db
       MYSQL_USER: root
       MYSQL_PASSWORD: password
-      MYSQL_DATABASE: booq
+      MYSQL_DATABASE: libra
+      MYSQL_HOSTNAME: localhost
+      MYSQL_PORT: 3306
     volumes:
       - "./:/app"
     tty: true
     ports:
-      - "8080:3000"
+      - "3000:3000"
     depends_on:
       db:
         condition: service_healthy
@@ -20,7 +22,7 @@ services:
     image: mariadb:10.6.4
     environment:
       MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: booq
+      MYSQL_DATABASE: libra
       MYSQL_USERNAME: root
       MYSQL_PASSWORD: password
     restart: always
@@ -35,12 +37,8 @@ services:
       timeout: 60s
       retries: 20
       start_period: 5s
-
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - "8081:8080"
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d
 
   swagger:
     image: swaggerapi/swagger-ui
