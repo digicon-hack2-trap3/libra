@@ -1,0 +1,53 @@
+version: "3.1"
+
+services:
+  app:
+    build: .
+    environment:
+      MYSQL_HOST: db
+      MYSQL_USER: root
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: booq
+    volumes:
+      - "./:/app"
+    tty: true
+    ports:
+      - "8080:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: mariadb:10.6.4
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: booq
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: password
+    restart: always
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    expose:
+      - "3306"
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USERNAME -p$$MYSQL_ROOT_PASSWORD
+      interval: 6s
+      timeout: 60s
+      retries: 20
+      start_period: 5s
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8081:8080"
+
+  swagger:
+    image: swaggerapi/swagger-ui
+    volumes:
+      - ./docs/openapi.yaml:/openapi.yaml
+    environment:
+      SWAGGER_JSON: /openapi.yaml
+    ports:
+      - "4000:8080"
+
