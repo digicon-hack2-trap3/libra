@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -10,12 +11,16 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 )
 
-var db *sqlx.DB
+var (
+        db *sqlx.DB
+        salt string
+)
 
 type Note struct {
         NoteId uint `json:"noteid" db:"noteid"`
@@ -42,9 +47,6 @@ func main() {
         e.Use(middleware.CORS())
         e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
 
-        e.GET("/", func(c echo.Context) error {
-                return c.String(http.StatusOK, "Hello, World!")
-        })
         e.POST("/login", PostLogin)
         e.GET("/whoamai", GetWhoamai)
         e.GET("/note", GetNote)
@@ -76,20 +78,100 @@ func InitDB() {
         if err != nil {
                 log.Fatal(err)
         }
+
+        salt = os.Getenv("PASSWORD_SALT");
 }
-// this user requires mysql native password authentication.
 
 func PostLogin(c echo.Context) error {
-        return c.NoContent(http.StatusNotImplemented)
+        username := c.QueryParam("username")
+        password := c.QueryParam("password")
+
+        if username == "" || password == "" {
+                return c.String(http.StatusBadRequest, "Username or Password is empty")
+        }
+
+        pw := password + salt
+        hashedPass, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
+        if err != nil {
+                log.Println(err)
+                return c.NoContent(http.StatusInternalServerError) 
+        }
+
+        var count int
+        err = db.Get(&count, "SELECT COUNT(*) FROM user WHERE username=?", username)
+        if err != nil {
+                log.Println(err)
+                return c.NoContent(http.StatusInternalServerError) 
+        }
+
+        if count == 0 {
+                _, err = db.Exec("INSERT INTO user (username, password) VALUES (?, ?)", username, hashedPass)
+                if err != nil {
+                        log.Println(err)
+                        return c.NoContent(http.StatusInternalServerError) 
+                }
+                var userid uint
+                err = db.Get(&userid, "SELECT userid FROM user WHERE username=?", username)
+                if err != nil {
+                        log.Println(err)
+                        return c.NoContent(http.StatusInternalServerError) 
+                }
+
+                sess, _ := session.Get("session", c)
+                sess.Values["username"] = username
+                sess.Values["userid"] = userid
+                sess.Save(c.Request(), c.Response())
+
+                return c.NoContent(http.StatusOK)
+        } else {
+                var correctHashedPass string
+                err := db.Get(&correctHashedPass, "SELECT password FROM user WHERE username=?", username)
+                if err != nil {
+                        log.Println(err)
+                        return c.NoContent(http.StatusInternalServerError) 
+                }
+
+                err = bcrypt.CompareHashAndPassword([]byte(correctHashedPass), []byte(password + salt))
+                if err != nil {
+                        if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+                                return c.NoContent(http.StatusUnauthorized)
+                        } else {
+                                log.Println(err)
+                                return c.NoContent(http.StatusInternalServerError)
+                        }
+                }
+
+                var userid uint
+                err = db.Get(&userid, "SELECT userid FROM user WHERE username=?", username)
+                if err != nil {
+                        log.Println(err)
+                        return c.NoContent(http.StatusInternalServerError) 
+                }
+                
+                sess, _ := session.Get("session", c)
+                sess.Values["username"] = username
+                sess.Values["userid"] = userid
+                sess.Save(c.Request(), c.Response())
+
+                return c.NoContent(http.StatusOK)
+        }
 }
 func GetWhoamai(c echo.Context) error {
-        return c.NoContent(http.StatusNotImplemented)
+        sess, _ := session.Get("session", c)
+        log.Println(sess.Values)
+        username, ok := sess.Values["username"]
+        if ok {
+                return c.String(http.StatusNotImplemented, username.(string))
+        } else {
+                return c.NoContent(http.StatusBadRequest)
+        }
 }
 func GetNote(c echo.Context) error {
         res := []Note{}
         err := db.Select(&res, "SELECT noteid, userid, title, color, createdAt FROM note")
         if err != nil {
-                return c.String(echo.ErrInternalServerError.Code, err.Error())
+                log.Println(err)
+                return c.NoContent(echo.ErrInternalServerError.Code)
         }
         return c.JSON(http.StatusOK, res)
 }
@@ -98,7 +180,8 @@ func GetNoteId(c echo.Context) error {
         res := NoteDetail{}
         err := db.Get(&res, "SELECT noteid, userid, title, text, color, createdAt FROM note WHERE noteid=?", noteid)
         if err != nil {
-                return c.String(echo.ErrInternalServerError.Code, err.Error())
+                log.Println(err)
+                return c.NoContent(echo.ErrInternalServerError.Code)
         }
         return c.JSON(http.StatusOK, res)
 }
@@ -106,20 +189,22 @@ func PostNote(c echo.Context) error {
         var noteDetail NoteDetail
         err := c.Bind(&noteDetail)
         if err != nil {
-                return c.String(echo.ErrInternalServerError.Code, err.Error())
+                log.Println(err)
+                return c.NoContent(echo.ErrInternalServerError.Code)
         }
         
         sess, _ := session.Get("session", c)
-        switch sess.Values["userid"].(type) {
-        case uint:
-                noteDetail.UserId = sess.Values["userid"].(uint)
-        default:
-                noteDetail.UserId = 0
+        userid, ok := sess.Values["userid"]
+        if !ok {
+                userid = uint(0)
         }
+        noteDetail.UserId = userid.(uint);
+
         _, err = db.Exec("INSERT INTO note (userid, title, text, color) VALUES (?, ?, ?, ?)",
                           noteDetail.UserId, noteDetail.Title, noteDetail.Text, noteDetail.Color)
         if err != nil {
-                return c.String(echo.ErrInternalServerError.Code, err.Error())
+                log.Println(err)
+                return c.NoContent(echo.ErrInternalServerError.Code)
         }
         return c.NoContent(http.StatusOK)
 }
@@ -128,7 +213,8 @@ func GetNoteAuthorId(c echo.Context) error {
         res := []Note{}
         err := db.Select(&res, "SELECT noteid, userid, title, color, createdAt FROM note WHERE userid=?", userid)
         if err != nil {
-                return c.String(echo.ErrInternalServerError.Code, err.Error())
+                log.Println(err)
+                return c.NoContent(echo.ErrInternalServerError.Code)
         }
         return c.JSON(http.StatusOK, res)
 }
