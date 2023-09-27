@@ -9,6 +9,7 @@ services:
       MYSQL_DATABASE: libra
       MYSQL_HOSTNAME: db
       MYSQL_PORT: 3306
+      PASSWORD_SALT: salt
     tty: true
     ports:
       - "3000:3000"
@@ -45,4 +46,3 @@ services:
       SWAGGER_JSON: /openapi.yml
     ports:
       - "4000:8080"
-
