@@ -86,7 +86,7 @@ func InitDB() {
             userid    SMALLINT UNSIGNED AUTO_INCREMENT,
             username  TINYTEXT NOT NULL,
             password  TINYTEXT NOT NULL,
-            PRIMARY KEY ("userid")
+            PRIMARY KEY (` + "`userid`" + `)
         );`
 
         _, err = db.Exec(query1)
@@ -102,7 +102,7 @@ func InitDB() {
             text      TEXT NOT NULL,
             color     VARCHAR(6) NOT NULL,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY ("noteid")
+            PRIMARY KEY (`+ "`userid`" + `)
         );`
 
         _, err = db.Exec(query2)
