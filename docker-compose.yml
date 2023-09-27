@@ -4,14 +4,11 @@ services:
   app:
     build: .
     environment:
-      MYSQL_HOST: db
       MYSQL_USER: root
       MYSQL_PASSWORD: password
       MYSQL_DATABASE: libra
-      MYSQL_HOSTNAME: localhost
+      MYSQL_HOSTNAME: db
       MYSQL_PORT: 3306
-    volumes:
-      - "./:/app"
     tty: true
     ports:
       - "3000:3000"
