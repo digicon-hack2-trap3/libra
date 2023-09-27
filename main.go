@@ -102,7 +102,7 @@ func InitDB() {
             text      TEXT NOT NULL,
             color     VARCHAR(6) NOT NULL,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (`+ "`userid`" + `)
+            PRIMARY KEY (`+ "`noteid`" + `)
         );`
 
         _, err = db.Exec(query2)
