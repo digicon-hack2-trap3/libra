@@ -195,7 +195,7 @@ components:
           type: string
           example: "#coffee"
       required:
-        - note_id
         - title
         - color
         - text
+
