@@ -23,16 +23,16 @@ var (
 )
 
 type Note struct {
-        NoteId uint `json:"noteid" db:"noteid"`
-        UserId uint `json:"userid" db:"userid"`
+        NoteId uint `json:"note_id" db:"noteid"`
+        UserId uint `json:"user_id" db:"userid"`
         Title string `json:"title" db:"title"`
         Color string `json:"color" db:"color"`
         CreatedAt string `json:"created_at" db:"createdAt"`
 }
 
 type NoteDetail struct {
-        NoteId uint `json:"noteid" db:"noteid"`
-        UserId uint `json:"userid" db:"userid"`
+        NoteId uint `json:"note_id" db:"noteid"`
+        UserId uint `json:"user_id" db:"userid"`
         Title string `json:"title" db:"title"`
         Text string `json:"text" db:"text"`
         Color string `json:"color" db:"color"`

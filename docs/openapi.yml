@@ -29,8 +29,8 @@ paths:
         schema:
           type: string
     post:
-      tags: 
-         - user
+      tags:
+        - user
       summary: ノートを投稿
       responses:
         "200":
@@ -185,9 +185,6 @@ components:
     postNote:
       type: object
       properties:
-        note_id:
-          type: integer
-          example: 13
         title:
           type: string
           example: トロッコ
